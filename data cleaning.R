@@ -25,6 +25,11 @@ levels(train$StateHoliday)[levels(train$StateHoliday)=="d"] <- "Christmas"
 train$SchoolHoliday[train$SchoolHoliday == 1] <- "yes"
 train$SchoolHoliday[train$SchoolHoliday == 0] <- "no"
 
+store$CompDate <- paste(store$CompetitionOpenSinceYear,store$CompetitionOpenSinceMonth,1, sep="-")
+store$CompDate <- as.Date(store$CompDate)
+store$CompDays <- as.numeric(as.Date("2015-07-31")-store$CompDate)
+
+
 
 
 
