@@ -38,6 +38,9 @@ newdata <- newdata[,-5]
 summary(newdata)
 str(newdata)
 
+# Remove sales = 0
+newdata<-newdata[newdata$Sales>0,]
+
 nrow(newdata[which(newdata$CompDays == -1),])
 newdata$CompetitionOpenSinceMonth[which(newdata$CompDays == -1)] <- NA
 newdata$CompetitionOpenSinceYear[which(newdata$CompDays == -1)] <- NA
@@ -50,6 +53,8 @@ list <- which(newdata$CompetitionOpenSinceYear == 1900)
 newdata <- newdata[-list,]
 list <- which(newdata$CompetitionOpenSinceYear == 1961)
 newdata <- newdata[-list,]
+# Remove sales = 46
+newdata<-newdata[newdata$Sales>46,]
 
 ################## CV #######################
 # Data Split: test data are records of 2015
