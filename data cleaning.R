@@ -1,61 +1,59 @@
-rm(list=ls())
-#Team 7
-#Brittany Hayes, Verghese Polakunnil, Lisha Shangguan, Matthew Esporrin
-#read in the data
-train<-read.csv("train.csv",sep=",",header=T)
-store<-read.csv("store.csv",sep=",",header=T)
+rm(list = ls())
+
+library(lubridate)
+library(ggplot2)
+
+data <- read.csv('train.csv',head=TRUE,stringsAsFactors = TRUE)
+store <- read.csv('store.csv',head=TRUE)
+
+###################### Data Cleaning & Preprocessing ##############################
+
+data$Open<-factor(data$Open,levels=c(1,0),labels=c("Open","Closed"))
+
+data$Promo<-factor(data$Promo,levels=c(1,0),labels=c("Yes","No"))
+
+levels(data$StateHoliday)[levels(data$StateHoliday)=="0"] <- "None"
+levels(data$StateHoliday)[levels(data$StateHoliday)=="a"] <- "Public holiday"
+levels(data$StateHoliday)[levels(data$StateHoliday)=="c"] <- "Easter holiday"
+levels(data$StateHoliday)[levels(data$StateHoliday)=="d"] <- "Christmas"
+
+data$SchoolHoliday<-factor(data$SchoolHoliday,levels=c(1,0),labels=c("Yes","No"))
+
+data$Date <- as.Date(data$Date)
+data$Year <- as.numeric(format(data$Date,"%y"))
+data$Month <- as.numeric(format(data$Date,"%m"))
+
+store$CompDate <- paste(store$CompetitionOpenSinceYear,store$CompetitionOpenSinceMonth,1, sep="-")
+store$CompDate <- as.Date(store$CompDate)
+store$CompDays <- as.numeric(as.Date("2015-07-31")-store$CompDate)
+store <- store[,c(-7,-8,-9,-10,-11)]
+
 levels(store$Assortment)[levels(store$Assortment)=="a"] <- "basic"
 levels(store$Assortment)[levels(store$Assortment)=="b"] <- "extra"
 levels(store$Assortment)[levels(store$Assortment)=="c"] <- "extended"
 
-#train$Open[train$Open == 1] <- "open"
-#train$Open[train$Open == 0] <- "closed"
+newdata <- merge(x = data, y = store, by = "Store", all.x = TRUE)
+newdata <- newdata[,-5]
 
-train$Promo[train$Promo == 1] <- "yes"
-train$Promo[train$Promo == 0] <- "no"
+summary(newdata)
+str(newdata)
 
-levels(train$StateHoliday)[levels(train$StateHoliday)=="0"] <- "None"
-levels(train$StateHoliday)[levels(train$StateHoliday)=="a"] <- "Public holiday"
-levels(train$StateHoliday)[levels(train$StateHoliday)=="c"] <- "Easter holiday"
-levels(train$StateHoliday)[levels(train$StateHoliday)=="d"] <- "Christmas"
+nrow(newdata[which(newdata$CompDays == -1),])
+newdata$CompetitionOpenSinceMonth[which(newdata$CompDays == -1)] <- NA
+newdata$CompetitionOpenSinceYear[which(newdata$CompDays == -1)] <- NA
+newdata$CompDays[which(newdata$CompDays == -1)] <- NA
 
-train$SchoolHoliday[train$SchoolHoliday == 1] <- "yes"
-train$SchoolHoliday[train$SchoolHoliday == 0] <- "no"
-store$CompDate <- paste(store$CompetitionOpenSinceYear,store$CompetitionOpenSinceMonth,1, sep="-")
-store$CompDate <- as.Date(store$CompDate)
-store$CompDays <- as.numeric(as.Date("2015-07-31")-store$CompDate)
-#join the tables
-joinedData<-merge(x = train, y = store, by = "Store", all.x = TRUE)
-write.csv(joinedData, file = "JoinedData.csv")
-data<-read.csv("JoinedData.csv",sep=",",header=T)
+# Rmove outliers
+nrow(newdata[which(newdata$CompetitionOpenSinceYear == 1900),])
+nrow(newdata[which(newdata$CompetitionOpenSinceYear == 1961),])
+list <- which(newdata$CompetitionOpenSinceYear == 1900)
+newdata <- newdata[-list,]
+list <- which(newdata$CompetitionOpenSinceYear == 1961)
+newdata <- newdata[-list,]
 
-#convert categoric data to factors
-data$Date<-as.Date(data$Data, '%m/%d/%Y')
-data$DayOfWeek<-as.factor(data$DayOfWeek)
-data$Open <-as.factor(data$Open)
-data$Promo<-as.factor(data$Promo)
-data$Promo2<-as.factor(data$Promo2)
-data$SchoolHoliday<-as.factor(data$SchoolHoliday)
-data$CompetitionOpenSinceMonth<-as.factor(data$CompetitionOpenSinceMonth)
-data$CompetitionOpenSinceYear<-as.factor(data$CompetitionOpenSinceYear)
-data$Promo2SinceWeek<-as.factor(data$Promo2SinceWeek)
-data$Promo2SinceYear<-as.factor(data$Promo2SinceYear)
-summary(data)
-
-#if we want to take out the days when the store is closed since there will not be sales
-datawhenOpen<-subset(data, Open!=0)
-
-#train with 2013 and 2014, test with 2015
-
-#GAM
-
-#Regression Trees
-
-#Boosting
-
-#SVMs
-
-
-
+################## CV #######################
+# Data Split: test data are records of 2015
+test <- newdata[which(newdata$Year==15),]
+train <- newdata[which(newdata$Year<15),]
 
 
