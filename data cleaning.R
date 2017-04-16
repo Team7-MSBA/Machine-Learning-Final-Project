@@ -61,4 +61,26 @@ newdata<-newdata[newdata$Sales>46,]
 test <- newdata[which(newdata$Year==15),]
 train <- newdata[which(newdata$Year<15),]
 
-
+####Regression Trees####
+library(rpart)
+library(tree)
+set.seed(2016)
+reg.tree<-tree(Sales~.,data=train)
+tree.pred = predict(reg.tree, test)
+tree.fulltestMSE <- mean((tree.pred-test$Sales)^2)
+#Use cross validation to figure out where to prune
+cv.salestree=cv.tree(reg.tree, FUN=prune.tree, K=5) #FUN is the function to identify the CV error
+names(cv.salestree)
+cv.salestree
+#plot
+par(mfrow=c(1,2))
+plot(cv.salestree$size ,cv.salestree$dev ,type="b")
+plot(cv.salestree$k ,cv.salestree$dev ,type="b")
+#prune
+par(mfrow=c(1,1))
+prune.sales = prune.tree(reg.tree, best=5)
+plot(prune.sales, type = "uniform")
+text(prune.sales, pretty =0, cex = 3/4)
+#calculate the test MSE
+tree.pred=predict(prune.sales,test)
+tree.testMSE<-mean((tree.pred-test$Sales)^2)
