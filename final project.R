@@ -194,3 +194,4 @@ gam.RMSPE=summary(SE)[4]
 gam.RMSPE  
 
 #gam1 has the best balance of RMSPE and MSE for the test set
+#plot(gam1)
