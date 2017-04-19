@@ -125,3 +125,72 @@ rmspe(train$Sales,pred) # 0.474
   pred <- h2o.predict(rf.fit,train.h2o)
   mse <- mean((train$Sales-as.data.frame(pred))^2) # 7280485
   rmspe(train$Sales,as.data.frame(pred)) # 0.487
+
+
+
+####Subset Selection####
+library(leaps)
+regfit.full=regsubsets(Sales~.,train, really.big = T)
+summary(regfit.full)
+plot(regfit.full,scale="r2")
+plot(regfit.full,scale="adjr2")
+plot(regfit.full,scale="Cp")
+plot(regfit.full,scale="bic")
+
+
+####GAM####
+require(gam)
+#with subset selected
+gam1=gam(Sales~s(CompDays)+CompetitionOpenSinceYear+s(CompetitionDistance)+Assortment+StoreType+Month+Promo+DayOfWeek, data=train)
+trainpreds=predict(gam1,train)
+SE=(trainpreds-train$Sales)^2
+gam.trainMSE<-summary(SE)[4]
+gam.trainMSE
+gam.preds<-predict(gam1,newdata = test)
+SE=(gam.preds-test$Sales)^2
+gam.testMSE<-summary(SE)[4]
+gam.testMSE  
+rmspe<-function(actuals,predictions){return(mean(((actuals-predictions)/actuals)^2)^0.5)}
+SE=(((test$Sales-gam.preds)/test$Sales)^2)^0.5
+gam.RMSPE=summary(SE)[4]  
+
+#no CompetitionOpenSinceYear
+gam2=gam(Sales~s(CompDays)+s(CompetitionDistance)+Assortment+StoreType+Month+Promo+DayOfWeek, data=train)
+#get train MSE
+trainpreds=predict(gam2,train)
+SE=(trainpreds-train$Sales)^2
+gam.trainMSE<-summary(SE)[4]
+gam.trainMSE 
+SE=(((train$Sales-trainpreds)/train$Sales)^2)^0.5
+gam.RMSPE=summary(SE)[4]
+
+#get test MSE
+gam.preds<-predict(gam2,newdata = test)
+SE=(gam.preds-test$Sales)^2
+gam.testMSE<-summary(SE)[4]
+gam.testMSE 
+SE=(((test$Sales-gam.preds)/test$Sales)^2)^0.5
+gam.RMSPE=summary(SE)[4]
+gam.RMSPE  
+
+#try with more degrees of freedom
+gam3=gam(Sales~s(CompDays,3)+s(CompetitionDistance,3)+Assortment+StoreType+Month+Promo+DayOfWeek, data=train)
+gam.preds<-predict(gam3,newdata = test)
+SE=(gam.preds-test$Sales)^2
+gam.testMSE<-summary(SE)[4]
+gam.testMSE 
+SE=(((test$Sales-gam.preds)/test$Sales)^2)^0.5
+gam.RMSPE=summary(SE)[4]
+gam.RMSPE 
+
+#more degrees of freedom
+gam4=gam(Sales~s(CompDays,4)+s(CompetitionDistance,4)+Assortment+StoreType+Month+Promo+DayOfWeek, data=train)
+gam.preds<-predict(gam4,newdata = test)
+SE=(gam.preds-test$Sales)^2
+gam.testMSE<-summary(SE)[4]
+gam.testMSE 
+SE=(((test$Sales-gam.preds)/test$Sales)^2)^0.5
+gam.RMSPE=summary(SE)[4]
+gam.RMSPE  
+
+#gam1 has the best balance of RMSPE and MSE for the test set
