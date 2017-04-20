@@ -3,6 +3,11 @@ rm(list=ls())
 setwd("C:\\MSBA\\Spring2017\\MachineLearning2\\JoinedData")
 dir()
 data <- read.csv("JoinedData.csv")
+
+
+###### KAGGLE TRAINING DATA STRUCTURE: 13 VARIABLES INCLUDING
+###### KAGGLE TEST DATA HAS ONLY 8 COLUMNS NO SALES OR CUSTOMER COUNT DATA, DOES NOT INCLUDE STORETYPE OR ASSORTMENT OR COMPETITOR DISTANCE
+##### THESE FEATURES CAN BE OBTAINED FOR EACH STORE FROM TRAINING DATA AS SHOWN BELOW.
 data$Date <- as.Date(data$Date, format = "%m/%d/%Y")
 data <- data[order(as.Date(data$Date, format="%d/%m/%Y")),]
 names(data) <- tolower(names(data))
@@ -70,7 +75,7 @@ predtest <- predict(modelgbm, data_test[-3])
 
 error2 <- mean(abs(predtest - data_test$sales))
 
-# train the SVM model
+# train the gam model
 set.seed(7)
 modelgam <- train(sales~., data=data_train, method="gamSpline", trControl=control)
 # collect resamples
@@ -110,6 +115,10 @@ gam1.tune <- train(sales~., data=data_train, method="gam", trControl=control)
 predgam1 <- predict(gam1.tune, newdata = data_test[-3])
 error4 <- mean(abs(predgam1 - data_test$sales))
 
+#### store_model function 
+#### input test data store number
+#### function will look up coresponding rows in training data and create a gbm model
+#### the gbm model will then pick the test data observations pertaining to the store and predict sales for 2015
 store_model <- function(x){
       set.seed(7)
       
@@ -136,6 +145,12 @@ pred_st3 <- store_model(3)
 
 
 ################### Clustering ##########
+#### General Overview:
+#### USE DUMBIES PACKAGE TO CREATE DUMMY VARIABLE FOR ALL CATEGORICAL DATA
+#### SCALE DATA THEN USE HCLUST() TO HIERARCHICAL CLUSTER DATA
+#### CREATE CLASSIFICATION MODEL TO PREDICT TEST DATA CLUSTERS USING CLUSTERED TRAINING DATA
+#### CREATE 5 SALES PREDICTION GBM MODELS TO PREDICT BE USED ON TRAINING DATA TO PREDICT SALES FOR EACH CLUSTER
+
 #install.packages("dummies")
 library("dummies")
 data3 <- read.csv("JoinedData.csv")
@@ -182,21 +197,12 @@ nrow(smpldata[which(smpldata$clust == 4),])
 nrow(smpldata[which(smpldata$clust == 5),])
 str(smpldata)
 
-
-
-
-
-
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
 grid <- expand.grid(size=c(5,10,15,20,25,30,35,40,45,50), k=c(3,5))
 
 ### Cluster predictor
 clust1 <- train(clust~., data=smpldata[-c(1,3,4)], method="lvq", trControl=control,tuneGrid=grid)
 pred22 <- predict(clust1, smpldata)
-
-###
-
-
 
 ####### create 5 models for each cluster:
 train1 <- smpldata[which(smpldata$clust == 1),]
